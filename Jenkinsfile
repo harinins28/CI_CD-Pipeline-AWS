@@ -2,7 +2,7 @@ pipeline {
   agent any
   environment {
     AWS_REGION = 'us-east-1'      // change to your region
-    ECR_REG = '288434313151.dkr.ecr.ap-south-1.amazonaws.com'
+    ECR_REG = '288434313151.dkr.ecr.us-east-1.amazonaws.com'
     REPO = 'ci-cd-sample-repo'
     IMAGE = "${ECR_REG}/${REPO}"
     SSH_CRED_ID = 'app-ssh-key'   // Jenkins SSH credential id
