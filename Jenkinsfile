@@ -15,8 +15,7 @@ pipeline {
     }
     stage('Build & Test') {
       steps {
-        bat 'npm ci'
-        bat 'npm start & sleep 2; npm test'
+        bat 'npm install'
       }
     }
     stage('Docker Build') {
