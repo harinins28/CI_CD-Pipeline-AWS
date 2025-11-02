@@ -15,32 +15,32 @@ pipeline {
     }
     stage('Build & Test') {
       steps {
-        sh 'npm ci'
-        sh 'npm start & sleep 2; npm test'
+        bat 'npm ci'
+        bat 'npm start & sleep 2; npm test'
       }
     }
     stage('Docker Build') {
       steps {
-        sh 'docker build -t cicsample:latest .'
+        bat 'docker build -t cicsample:latest .'
       }
     }
     stage('Login to ECR & Tag') {
       steps {
         // login; requires aws creds on Jenkins machine
-        sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REG}"
-        sh "docker tag cicsample:latest ${IMAGE}:latest"
+        bat "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REG}"
+        bat "docker tag cicsample:latest ${IMAGE}:latest"
       }
     }
     stage('Push to ECR') {
       steps {
-        sh "docker push ${IMAGE}:latest"
+        bat "docker push ${IMAGE}:latest"
       }
     }
     stage('Deploy to EC2') {
       steps {
         // SSH to EC2 and run docker pull & run
         sshagent (credentials: [SSH_CRED_ID]) {
-          sh """
+          bat """
             ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \\
             "docker pull ${IMAGE}:latest && docker stop cicsample || true && docker rm cicsample || true && docker run -d --name cicsample -p 3000:3000 ${IMAGE}:latest"
           """
