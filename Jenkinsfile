@@ -1,64 +1,81 @@
 pipeline {
-  agent any
-  environment {
-    AWS_REGION = 'us-east-1'      // change to your region
-    ECR_REG = '288434313151.dkr.ecr.us-east-1.amazonaws.com'
-    REPO = 'ci-cd-sample-repo'
-    IMAGE = "${ECR_REG}/${REPO}"
-    SSH_CRED_ID = 'app-ssh-key'   // Jenkins SSH credential id
-    EC2_USER = 'ubuntu'
-    EC2_HOST = '54.197.27.87'
-  }
-  stages {
-    stage('Checkout') {
-      steps { checkout scm }
-    }
-    stage('Build & Test') {
-      steps {
-        bat 'npm install'
-      }
-    }
-    stage('Docker Build') {
-      steps {
-        bat 'docker build -t cicsample:latest .'
-      }
-    }
-    stage('Login to ECR & Tag') {
-        steps {
-            withCredentials([
-                string(credentialsId: 'aws_credential', variable: 'aws_credential'),
-                string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY')
-            ]) {
-                bat """
-                aws configure set aws_access_key_id %AWS_ACCESS_KEY_ID%
-                aws configure set aws_secret_access_key %AWS_SECRET_ACCESS_KEY%
-                aws configure set default.region us-east-1
+    agent any
 
-                aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 288434313151.dkr.ecr.us-east-1.amazonaws.com
-                """
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REPO = '288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo'
+        IMAGE_NAME = 'cicsample'
+        SSH_KEY = credentials('app-ssh-key') // Add your EC2 PEM key as Jenkins credential (Secret File or SSH)
+        EC2_USER = 'ubuntu'
+        EC2_HOST = '34.226.195.199'
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github_token', // Add your GitHub Personal Access Token in Jenkins credentials
+                    url: 'https://github.com/harinins28/CI_CD-Pipeline-AWS.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "Building Docker image..."
+                    sh "docker build -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                withAWS(credentials: 'AWS_SECRET_ACCESS_KEY', region: "${AWS_REGION}") {
+                    script {
+                        sh """
+                            aws ecr get-login-password --region ${AWS_REGION} \
+                            | docker login --username AWS --password-stdin ${ECR_REPO}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Tag & Push to ECR') {
+            steps {
+                script {
+                    echo "Tagging image..."
+                    sh """
+                        docker tag ${IMAGE_NAME}:latest ${ECR_REPO}:latest
+                        docker push ${ECR_REPO}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                script {
+                    echo "Deploying to EC2..."
+                    sh """
+                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_USER}@${EC2_HOST} '
+                            docker pull ${ECR_REPO}:latest &&
+                            docker stop ${IMAGE_NAME} || true &&
+                            docker rm ${IMAGE_NAME} || true &&
+                            docker run -d --name ${IMAGE_NAME} -p 3000:3000 ${ECR_REPO}:latest
+                        '
+                    """
+                }
             }
         }
     }
 
-    stage('Push to ECR') {
-      steps {
-        bat "docker push ${IMAGE}:latest"
-      }
-    }
-    stage('Deploy to EC2') {
-      steps {
-        // SSH to EC2 and run docker pull & run
-        sshagent (credentials: [SSH_CRED_ID]) {
-          bat """
-            ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} \\
-            "docker pull ${IMAGE}:latest && docker stop cicsample || true && docker rm cicsample || true && docker run -d --name cicsample -p 3000:3000 ${IMAGE}:latest"
-          """
+    post {
+        success {
+            echo '✅ Deployment successful!'
         }
-      }
+        failure {
+            echo '❌ Deployment failed.'
+        }
     }
-  }
-  post {
-    success { echo 'Pipeline succeeded' }
-    failure { echo 'Pipeline failed' }
-  }
 }
