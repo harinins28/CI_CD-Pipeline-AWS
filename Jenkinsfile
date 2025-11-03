@@ -57,24 +57,28 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'app-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-                    bat """
+                    bat '''
                         echo Deploying to EC2...
+                        set PEM_FILE=%SSH_KEY%
+                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ubuntu@34.226.195.199 ^
+                        "bash -s" << 'EOF'
+                        set -e
+                        echo "✅ Connected to EC2. Starting deployment..."
 
-                        set "PEM_FILE=%SSH_KEY%"
-
-                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ubuntu@34.226.195.199 "
-                            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo &&
-                            docker pull 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest &&
-                            docker stop cicsample || true &&
-                            docker rm -f cicsample || true &&
-                            docker rmi 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest || true &&
-                            docker pull 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest &&
-                            docker run -d --name cicsample -p 3000:3000 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest
-                        "
-                    """
+                        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo
+                        docker stop cicsample || true
+                        docker rm -f cicsample || true
+                        docker rmi 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest || true
+                        docker pull 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest
+                        docker run -d --name cicsample -p 3000:3000 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest
+                        echo "🚀 Deployment complete!"
+                        exit
+        EOF
+                    '''
                 }
             }
         }
+
 
 
     }
