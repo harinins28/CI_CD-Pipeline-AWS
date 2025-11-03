@@ -56,17 +56,22 @@ pipeline {
         stage('Deploy to EC2') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'app-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-                    bat '''
-                        chmod 600 $SSH_KEY
-                        ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@34.226.195.199 "
-                            cd /var/www/html &&
-                            git pull origin main
-                        "
-                    '''
+                    bat """
+                        echo Deploying to EC2...
+
+                        REM Convert Jenkins temp key path to Windows format
+                        set "PEM_FILE=%SSH_KEY%"
+
+                        REM Use full path for SSH
+                        echo Using key at %PEM_FILE%
+
+                        REM Run SSH command to deploy
+                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ubuntu@34.226.195.199 "docker pull 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest && docker stop cicsample || true && docker rm cicsample || true && docker run -d --name cicsample -p 3000:3000 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest"
+                    """
                 }
             }
         }
-    }
+
 
     post {
         success {
