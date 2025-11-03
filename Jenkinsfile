@@ -62,11 +62,18 @@ pipeline {
                         set "PEM_FILE=%SSH_KEY%"
                         echo Using key at %PEM_FILE%
 
-                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "docker pull ${ECR_REPO}:latest && docker stop ${IMAGE_NAME} || true && docker rm ${IMAGE_NAME} || true && docker run -d --name ${IMAGE_NAME} -p 3000:3000 ${ECR_REPO}:latest"
+                        REM SSH into EC2 and login to ECR before pulling
+                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} ^
+                        "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO} && \
+                        docker pull ${ECR_REPO}:latest && \
+                        docker stop ${IMAGE_NAME} || true && \
+                        docker rm ${IMAGE_NAME} || true && \
+                        docker run -d --name ${IMAGE_NAME} -p 3000:3000 ${ECR_REPO}:latest"
                     """
                 }
             }
         }
+
     }
 
     post {
