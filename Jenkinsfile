@@ -61,19 +61,21 @@ pipeline {
                         echo Deploying to EC2...
 
                         set "PEM_FILE=%SSH_KEY%"
-                        echo Using key at %PEM_FILE%
 
-                        REM SSH into EC2 and login to ECR before pulling
-                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} ^
-                        "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO} && \
-                        docker pull --no-cache ${ECR_REPO}:latest && \
-                        docker stop ${IMAGE_NAME} || true && \
-                        docker rm ${IMAGE_NAME} || true && \
-                        docker run -d --name ${IMAGE_NAME} -p 3000:3000 ${ECR_REPO}:latest"
+                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ubuntu@34.226.195.199 "
+                            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo &&
+                            docker pull 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest &&
+                            docker stop cicsample || true &&
+                            docker rm -f cicsample || true &&
+                            docker rmi 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest || true &&
+                            docker pull 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest &&
+                            docker run -d --name cicsample -p 3000:3000 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest
+                        "
                     """
                 }
             }
         }
+
 
     }
 
