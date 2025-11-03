@@ -5,7 +5,7 @@ pipeline {
         AWS_REGION = 'us-east-1'
         ECR_REPO = '288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo'
         IMAGE_NAME = 'cicsample'
-        SSH_KEY = credentials('app-ssh-key') // Add your EC2 PEM key as Jenkins credential (Secret File or SSH)
+        SSH_KEY = credentials('app-ssh-key') // Jenkins credential (Secret File or SSH)
         EC2_USER = 'ubuntu'
         EC2_HOST = '34.226.195.199'
     }
@@ -33,7 +33,7 @@ pipeline {
                 withAWS(credentials: 'AWS_Credential', region: "${AWS_REGION}") {
                     script {
                         bat """
-                            aws ecr get-login-password --region ${AWS_REGION} \
+                            aws ecr get-login-password --region ${AWS_REGION} ^
                             | docker login --username AWS --password-stdin ${ECR_REPO}
                         """
                     }
@@ -44,7 +44,7 @@ pipeline {
         stage('Tag & Push to ECR') {
             steps {
                 script {
-                    echo "Tagging image..."
+                    echo "Tagging and pushing image..."
                     bat """
                         docker tag ${IMAGE_NAME}:latest ${ECR_REPO}:latest
                         docker push ${ECR_REPO}:latest
@@ -59,19 +59,15 @@ pipeline {
                     bat """
                         echo Deploying to EC2...
 
-                        REM Convert Jenkins temp key path to Windows format
                         set "PEM_FILE=%SSH_KEY%"
-
-                        REM Use full path for SSH
                         echo Using key at %PEM_FILE%
 
-                        REM Run SSH command to deploy
-                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ubuntu@34.226.195.199 "docker pull 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest && docker stop cicsample || true && docker rm cicsample || true && docker run -d --name cicsample -p 3000:3000 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo:latest"
+                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "docker pull ${ECR_REPO}:latest && docker stop ${IMAGE_NAME} || true && docker rm ${IMAGE_NAME} || true && docker run -d --name ${IMAGE_NAME} -p 3000:3000 ${ECR_REPO}:latest"
                     """
                 }
             }
         }
-
+    }
 
     post {
         success {
