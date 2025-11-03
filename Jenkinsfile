@@ -30,7 +30,7 @@ pipeline {
 
         stage('Login to AWS ECR') {
             steps {
-                withAWS(credentials: 'AWS_Creds', region: "${AWS_REGION}") {
+                withAWS(credentials: 'AWS_Credential', region: "${AWS_REGION}") {
                     script {
                         bat """
                             aws ecr get-login-password --region ${AWS_REGION} \
