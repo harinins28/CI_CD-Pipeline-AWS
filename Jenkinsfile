@@ -55,16 +55,14 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                script {
-                    echo "Deploying to EC2..."
-                    bat """
-                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_USER}@${EC2_HOST} '
-                            docker pull ${ECR_REPO}:latest &&
-                            docker stop ${IMAGE_NAME} || true &&
-                            docker rm ${IMAGE_NAME} || true &&
-                            docker run -d --name ${IMAGE_NAME} -p 3000:3000 ${ECR_REPO}:latest
-                        '
-                    """
+                withCredentials([sshUserPrivateKey(credentialsId: 'SSH_KEY', keyFileVariable: 'SSH_KEY')]) {
+                    bat '''
+                        chmod 600 $SSH_KEY
+                        ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@34.226.195.199 "
+                            cd /var/www/html &&
+                            git pull origin main
+                        "
+                    '''
                 }
             }
         }
