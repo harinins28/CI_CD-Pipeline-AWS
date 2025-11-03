@@ -53,7 +53,6 @@ pipeline {
                 }
             }
         }
-//adda
         stage('Deploy to EC2') {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'app-ssh-key', keyFileVariable: 'SSH_KEY')]) {
@@ -73,6 +72,7 @@ pipeline {
                 }
             }
         }
+
 
 
 
