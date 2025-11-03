@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     echo "Building Docker image..."
-                    sh "docker build -t ${IMAGE_NAME}:latest ."
+                    bat "docker build -t ${IMAGE_NAME}:latest ."
                 }
             }
         }
@@ -32,7 +32,7 @@ pipeline {
             steps {
                 withAWS(credentials: 'AWS_SECRET_ACCESS_KEY', region: "${AWS_REGION}") {
                     script {
-                        sh """
+                        bat """
                             aws ecr get-login-password --region ${AWS_REGION} \
                             | docker login --username AWS --password-stdin ${ECR_REPO}
                         """
@@ -45,7 +45,7 @@ pipeline {
             steps {
                 script {
                     echo "Tagging image..."
-                    sh """
+                    bat """
                         docker tag ${IMAGE_NAME}:latest ${ECR_REPO}:latest
                         docker push ${ECR_REPO}:latest
                     """
@@ -57,7 +57,7 @@ pipeline {
             steps {
                 script {
                     echo "Deploying to EC2..."
-                    sh """
+                    bat """
                         ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${EC2_USER}@${EC2_HOST} '
                             docker pull ${ECR_REPO}:latest &&
                             docker stop ${IMAGE_NAME} || true &&
