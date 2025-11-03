@@ -14,7 +14,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                    credentialsId: 'github_token', // Add your GitHub Personal Access Token in Jenkins credentials
+                    credentialsId: 'github_token', 
                     url: 'https://github.com/harinins28/CI_CD-Pipeline-AWS.git'
             }
         }
@@ -30,7 +30,7 @@ pipeline {
 
         stage('Login to AWS ECR') {
             steps {
-                withAWS(credentials: 'AWS_SECRET_ACCESS_KEY', region: "${AWS_REGION}") {
+                withAWS(credentials: 'AWS_Creds', region: "${AWS_REGION}") {
                     script {
                         bat """
                             aws ecr get-login-password --region ${AWS_REGION} \
