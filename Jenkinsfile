@@ -15,7 +15,7 @@ pipeline {
             steps {
                 git branch: 'main',
                     credentialsId: 'github_token', 
-                    url: 'https://github.com/harinins28/CI_CD-Pipe  line-AWS.git'
+                    url: 'https://github.com/harinins28/CI_CD-Pipeline-AWS.git'
             }
         }
 
