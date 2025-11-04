@@ -62,7 +62,7 @@ pipeline {
                         set PEM_FILE=%SSH_KEY%
                         echo Using key at %PEM_FILE%
 
-                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ubuntu@34.226.195.199 ^
+                        "C:\\Program Files\\Git\\usr\\bin\\ssh.exe" -i "%PEM_FILE%" -o StrictHostKeyChecking=no ubuntu@34.204.15.178 ^
                         "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 288434313151.dkr.ecr.us-east-1.amazonaws.com/ci-cd-sample-repo && \
                         docker stop cicsample || true && \
                         docker rm -f cicsample || true && \
