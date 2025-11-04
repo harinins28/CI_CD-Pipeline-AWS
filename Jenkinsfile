@@ -7,7 +7,7 @@ pipeline {
         IMAGE_NAME = 'cicsample'
         SSH_KEY = credentials('app-ssh-key') // Jenkins credential (Secret File or SSH)
         EC2_USER = 'ubuntu'
-        EC2_HOST = '34.226.195.199'
+        EC2_HOST = '34.204.15.178'
     }
 
     stages {
@@ -15,7 +15,7 @@ pipeline {
             steps {
                 git branch: 'main',
                     credentialsId: 'github_token', 
-                    url: 'https://github.com/harinins28/CI_CD-Pipeline-AWS.git'
+                    url: 'https://github.com/harinins28/CI_CD-Pipe  line-AWS.git'
             }
         }
 
